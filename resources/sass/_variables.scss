@@ -1,0 +1,21 @@
+// Body
+$body-bg: #F3F4F6;
+
+// Typography
+$font-family-sans-serif: 'Inter', system-ui, -apple-system, sans-serif;
+$font-size-base: 0.95rem;
+$line-height-base: 1.6;
+
+// Colors
+$primary: #1E3A8A;
+$teal: #14B8A6;
+$success: #10B981;
+$danger: #EF4444;
+$warning: #F59E0B;
+$info: #3B82F6;
+
+// Custom Variables
+$glass-bg: rgba(255, 255, 255, 0.7);
+$glass-border: rgba(255, 255, 255, 0.3);
+$card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+$card-shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);

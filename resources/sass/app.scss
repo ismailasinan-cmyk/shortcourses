@@ -1,0 +1,207 @@
+// Fonts
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+// Variables
+@import 'variables';
+
+// Bootstrap
+@import 'bootstrap/scss/bootstrap';
+
+// --- Custom Theme ---
+
+body {
+    color: #1F2937;
+    -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-weight: 700;
+    color: $primary;
+    margin-bottom: 1.5rem;
+}
+
+// Navigation
+.navbar {
+    background: $glass-bg !important;
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid $glass-border;
+    position: sticky;
+    top: 0;
+    z-index: 1020;
+    padding: 0.75rem 0;
+    transition: all 0.3s ease;
+
+    &.scrolled {
+        padding: 0.5rem 0;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+}
+
+.nav-link {
+    font-weight: 500;
+    color: #4B5563 !important;
+    padding: 0.5rem 1rem !important;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+
+    &:hover {
+        color: $primary !important;
+        background: rgba(30, 58, 138, 0.05);
+    }
+
+    &.active {
+        color: $primary !important;
+        background: rgba(30, 58, 138, 0.1);
+    }
+}
+
+// Glassmorphism Cards
+.card {
+    background: $glass-bg;
+    backdrop-filter: blur(8px);
+    border: 1px solid $glass-border;
+    border-radius: 16px;
+    box-shadow: $card-shadow;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    overflow: hidden;
+
+    &.glass-card {
+        &:hover {
+            transform: translateY(-5px);
+            box-shadow: $card-shadow-hover;
+        }
+    }
+
+    .card-header {
+        background: transparent;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        padding: 1.25rem;
+        font-weight: 600;
+    }
+
+    .card-body {
+        padding: 1.5rem;
+    }
+}
+
+// Buttons
+.btn {
+    padding: 0.625rem 1.5rem;
+    font-weight: 600;
+    border-radius: 9999px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    &:hover {
+        transform: scale(1.02);
+    }
+
+    &:active {
+        transform: scale(0.98);
+    }
+}
+
+.btn-primary {
+    background-color: $primary;
+    border-color: $primary;
+
+    &:hover {
+        background-color: darken($primary, 5%);
+        border-color: darken($primary, 5%);
+        box-shadow: 0 4px 12px rgba(30, 58, 138, 0.25);
+    }
+}
+
+.btn-teal {
+    background-color: $teal;
+    border-color: $teal;
+    color: white;
+
+    &:hover {
+        background-color: darken($teal, 5%);
+        border-color: darken($teal, 5%);
+        color: white;
+        box-shadow: 0 4px 12px rgba(20, 184, 166, 0.25);
+    }
+}
+
+// Forms
+.form-control,
+.form-select {
+    background-color: white;
+    border: 1px solid #E5E7EB;
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    transition: all 0.2s ease;
+
+    &:focus {
+        border-color: $teal;
+        box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.1);
+        outline: none;
+    }
+}
+
+.form-label {
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: #374151;
+    margin-bottom: 0.5rem;
+}
+
+// Validation
+.invalid-feedback {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    margin-top: 0.375rem;
+}
+
+// Language Toggle
+.lang-toggle {
+    display: flex;
+    background: #E5E7EB;
+    padding: 0.25rem;
+    border-radius: 9999px;
+    gap: 0.25rem;
+
+    .nav-link {
+        padding: 0.25rem 1rem !important;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+
+        &.fw-bold {
+            background: white;
+            color: $primary !important;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+    }
+}
+
+// Status & Progress
+.status-badge {
+    padding: 0.375rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+// Receipt/Status Branding
+.receipt-header {
+    border-bottom: 2px solid $primary;
+    padding-bottom: 2rem;
+    margin-bottom: 2rem;
+}
+
+.divider-subtle {
+    height: 1px;
+    background: linear-gradient(to right, transparent, #E5E7EB, transparent);
+    margin: 2rem 0;
+}
