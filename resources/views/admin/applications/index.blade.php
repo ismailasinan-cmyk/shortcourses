@@ -65,10 +65,22 @@
     <div class="card glass-card">
         <div class="card-body p-0">
             <div class="table-responsive">
+                <form id="batchDeleteForm" action="{{ route('admin.applications.batch-destroy') }}" method="POST" onsubmit="return confirm('Are you sure you want to delete these applications? This action cannot be undone.');">
+                    @csrf
+                    @method('DELETE')
+                    <div class="mb-3 d-none" id="batchActions">
+                        <button type="submit" class="btn btn-danger btn-sm shadow-sm rounded-pill px-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            {{ __('Delete Selected') }} (<span id="selectedCount">0</span>)
+                        </button>
+                    </div>
                 <table class="table table-hover mb-0">
                     <thead class="bg-light bg-opacity-50 text-muted small">
                         <tr>
-                            <th class="ps-4 py-3 text-uppercase fw-bold">{{ __('Reference') }}</th>
+                            <th class="ps-4 py-3" style="width: 40px;">
+                                <input type="checkbox" class="form-check-input" id="selectAll">
+                            </th>
+                            <th class="py-3 text-uppercase fw-bold">{{ __('Reference') }}</th>
                             <th class="py-3 text-uppercase fw-bold">{{ __('Applicant') }}</th>
                             <th class="py-3 text-uppercase fw-bold">{{ __('Course') }}</th>
                             <th class="py-3 text-uppercase fw-bold">{{ __('Fee (₦)') }}</th>
@@ -82,6 +94,9 @@
                         @foreach($applications as $app)
                         <tr>
                             <td class="ps-4 py-3">
+                                <input type="checkbox" name="ids[]" value="{{ $app->id }}" class="form-check-input batch-checkbox">
+                            </td>
+                            <td class="py-3">
                                 <span class="font-monospace small text-primary fw-bold">{{ $app->application_ref }}</span>
                             </td>
                             <td class="py-3">
@@ -145,6 +160,7 @@
                         @endforeach
                     </tbody>
                 </table>
+                </form>
             </div>
             @if($applications->hasPages())
                 <div class="px-4 py-3 border-top bg-light bg-opacity-25">
@@ -259,5 +275,32 @@
             document.getElementById('receiptImage').src = '';
         });
     }
+
+    // Batch Selection Logic
+    const selectAllInfo = document.getElementById('selectAll');
+    const checkboxes = document.querySelectorAll('.batch-checkbox');
+    const batchActions = document.getElementById('batchActions');
+    const selectedCountSpan = document.getElementById('selectedCount');
+
+    function updateBatchActions() {
+        const selected = document.querySelectorAll('.batch-checkbox:checked').length;
+        selectedCountSpan.textContent = selected;
+        if (selected > 0) {
+            batchActions.classList.remove('d-none');
+        } else {
+            batchActions.classList.add('d-none');
+        }
+    }
+
+    if(selectAllInfo) {
+        selectAllInfo.addEventListener('change', function() {
+            checkboxes.forEach(cb => cb.checked = this.checked);
+            updateBatchActions();
+        });
+    }
+
+    checkboxes.forEach(cb => {
+        cb.addEventListener('change', updateBatchActions);
+    });
 </script>
 @endpush

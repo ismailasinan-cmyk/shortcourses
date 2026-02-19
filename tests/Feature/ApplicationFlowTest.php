@@ -109,4 +109,24 @@ class ApplicationFlowTest extends TestCase
         $response->assertSee($application->surname);
         $response->assertSee($course->course_name, false); 
     }
+
+    public function test_admin_can_batch_delete_applications()
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+        $applications = Application::factory()->count(3)->create();
+
+        $idsToDelete = $applications->take(2)->pluck('id')->toArray();
+
+        $response = $this->actingAs($admin)->delete(route('admin.applications.batch-destroy'), [
+            'ids' => $idsToDelete
+        ]);
+
+        $response->assertRedirect();
+        
+        foreach ($idsToDelete as $id) {
+            $this->assertDatabaseMissing('applications', ['id' => $id]);
+        }
+        
+        $this->assertDatabaseHas('applications', ['id' => $applications->last()->id]);
+    }
 }

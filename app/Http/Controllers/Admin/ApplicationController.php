@@ -192,4 +192,17 @@ class ApplicationController extends Controller
 
         return back()->with('success', 'Payment approved successfully.');
     }
+
+    public function batchDestroy(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:applications,id',
+        ]);
+
+        $count = count($request->ids);
+        \App\Models\Application::whereIn('id', $request->ids)->delete();
+
+        return back()->with('success', "$count application(s) deleted successfully.");
+    }
 }

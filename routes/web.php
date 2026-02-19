@@ -61,4 +61,6 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['auth', 'a
 
     Route::get('/settings', [App\Http\Controllers\Admin\SettingsController::class, 'index'])->name('settings.index');
     Route::post('/settings', [App\Http\Controllers\Admin\SettingsController::class, 'update'])->name('settings.update');
+    
+    Route::delete('/applications/batch-destroy', [App\Http\Controllers\Admin\ApplicationController::class, 'batchDestroy'])->name('applications.batch-destroy');
 });
