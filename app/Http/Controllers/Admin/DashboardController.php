@@ -16,7 +16,7 @@ class DashboardController extends Controller
             'total_courses' => \App\Models\ShortCourse::count(),
         ];
         
-        $recent_applications = \App\Models\Application::with('course')->latest()->take(5)->get();
+        $recent_applications = \App\Models\Application::with(['course' => fn($q) => $q->withTrashed()])->latest()->take(5)->get();
 
         return view('admin.dashboard', compact('stats', 'recent_applications'));
     }

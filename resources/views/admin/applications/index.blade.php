@@ -89,8 +89,8 @@
                                 <small class="text-muted">{{ $app->email }}</small>
                             </td>
                             <td class="py-3">
-                                <div class="small fw-medium">{{ Str::limit($app->course->course_name, 35) }}</div>
-                                <small class="text-muted">{{ $app->course->category }}</small>
+                                <div class="small fw-medium">{{ Str::limit($app->course?->course_name ?? 'N/A', 35) }}</div>
+                                <small class="text-muted">{{ $app->course?->category ?? 'N/A' }}</small>
                             </td>
                             <td class="py-3 fw-bold text-teal">₦{{ number_format($app->amount, 2) }}</td>
                             <td class="py-3 text-center">

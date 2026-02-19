@@ -89,7 +89,7 @@
                                         <div class="fw-bold">{{ $app->surname }} {{ $app->first_name }}</div>
                                         <small class="text-muted">{{ $app->email }}</small>
                                     </td>
-                                    <td class="py-3">{{ Str::limit($app->course->course_name, 30) }}</td>
+                                    <td class="py-3">{{ Str::limit($app->course?->course_name ?? 'N/A', 30) }}</td>
                                     <td class="py-3 fw-medium">₦{{ number_format($app->amount, 2) }}</td>
                                     <td class="py-3">
                                         <span class="status-badge" style="background: {{ $app->payment_status == 'PAID' ? 'rgba(16, 185, 129, 0.1)' : ($app->payment_status == 'PENDING' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(239, 68, 68, 0.1)') }}; color: {{ $app->payment_status == 'PAID' ? '#059669' : ($app->payment_status == 'PENDING' ? '#D97706' : '#DC2626') }};">

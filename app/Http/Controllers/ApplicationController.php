@@ -162,7 +162,7 @@ class ApplicationController extends Controller
 
     public function review($ref)
     {
-        $application = \App\Models\Application::where('application_ref', $ref)->with(['course', 'payments'])->firstOrFail();
+        $application = \App\Models\Application::where('application_ref', $ref)->with(['course' => fn($q) => $q->withTrashed(), 'payments'])->firstOrFail();
         
         if ($application->payment_status == 'PAID') {
              // If already paid, redirect to receipt or status?
@@ -199,6 +199,7 @@ class ApplicationController extends Controller
     {
         $application = \App\Models\Application::where('application_ref', $ref)
             ->where('user_id', auth()->id())
+            ->with(['course' => fn($q) => $q->withTrashed()])
             ->firstOrFail();
 
         if ($application->admission_status !== 'ADMITTED') {
@@ -213,6 +214,7 @@ class ApplicationController extends Controller
     {
         $application = \App\Models\Application::where('application_ref', $ref)
             ->where('user_id', auth()->id())
+            ->with(['course' => fn($q) => $q->withTrashed()])
             ->firstOrFail();
 
         if ($application->admission_status !== 'ADMITTED') {

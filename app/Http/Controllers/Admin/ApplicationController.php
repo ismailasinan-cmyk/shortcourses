@@ -9,7 +9,7 @@ class ApplicationController extends Controller
 {
     public function index(Request $request)
     {
-        $query = \App\Models\Application::with(['course', 'payments'])->latest();
+        $query = \App\Models\Application::with(['course' => fn($q) => $q->withTrashed(), 'payments'])->latest();
 
         if ($request->filled('status')) {
             $query->where('payment_status', $request->status);

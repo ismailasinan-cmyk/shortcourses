@@ -27,7 +27,7 @@
                         </tr>
                         <tr>
                             <th>{{ __('Course') }}</th>
-                            <td>{{ $application->course->course_name }}</td>
+                            <td>{{ $application->course?->course_name ?? 'N/A' }}</td>
                         </tr>
                         <tr>
                             <th>{{ __('Highest Qualification') }}</th>
