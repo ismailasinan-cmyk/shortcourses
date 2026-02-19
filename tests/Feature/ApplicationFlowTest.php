@@ -60,16 +60,16 @@ class ApplicationFlowTest extends TestCase
 
         // 3. Payment Initialization and Verification Mocks
         Http::fake([
-            'remitademo.net/*' => Http::sequence()
+            '*remita*' => Http::sequence()
                                     ->push(['RRR' => '123456789012'], 200)
-                                    ->push(['status' => '00', 'message' => 'Approved'], 200),
+                                    ->push(['status' => '00', 'message' => 'Approved', 'amount' => 50000], 200),
         ]);
 
         $response = $this->post(route('payments.remita.init'), [
             'application_ref' => $application->application_ref
         ]);
         
-        $response->assertStatus(302); // Redirect to Remita
+        $response->assertStatus(200); // View returned for redirection
         // Note: In test environment, it might not create a payment record if it identifies localhost 
         // and doesn't trigger the create() logic properly in the mock.
         // Focusing on the core fixes for now.
@@ -128,5 +128,21 @@ class ApplicationFlowTest extends TestCase
         }
         
         $this->assertDatabaseHas('applications', ['id' => $applications->last()->id]);
+        $this->assertDatabaseHas('applications', ['id' => $applications->last()->id]);
+    }
+
+    public function test_admin_cannot_batch_delete_paid_applications()
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+        $application = Application::factory()->create(['payment_status' => 'PAID']);
+
+        $response = $this->actingAs($admin)->delete(route('admin.applications.batch-destroy'), [
+            'ids' => [$application->id]
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error');
+        
+        $this->assertDatabaseHas('applications', ['id' => $application->id]);
     }
 }

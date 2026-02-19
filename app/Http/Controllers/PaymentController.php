@@ -21,6 +21,10 @@ class PaymentController extends Controller
     {
         $application = Application::where('application_ref', $ref)->firstOrFail();
         
+        if ($application->user_id !== auth()->id()) {
+            abort(403, 'Unauthorized access to this application.');
+        }
+        
         if ($application->payment_status == 'PAID') {
             return redirect()->route('applications.review', $application->application_ref)->with('success', 'Payment already completed.');
         }
@@ -32,6 +36,10 @@ class PaymentController extends Controller
     {
         $application = Application::where('application_ref', $ref)->firstOrFail();
 
+        if ($application->user_id !== auth()->id()) {
+            abort(403, 'Unauthorized access to this application.');
+        }
+
         if ($application->payment_status == 'PAID') {
             return redirect()->route('applications.review', $application->application_ref)->with('success', 'Payment already completed.');
         }
@@ -42,6 +50,10 @@ class PaymentController extends Controller
     public function processConfirmation(Request $request, $ref)
     {
         $application = Application::where('application_ref', $ref)->firstOrFail();
+
+        if ($application->user_id !== auth()->id()) {
+            abort(403, 'Unauthorized access to this application.');
+        }
 
         if ($application->payment_status == 'PAID') {
              return redirect()->route('applications.review', $application->application_ref);
@@ -223,6 +235,10 @@ class PaymentController extends Controller
     {
         $application = Application::where('application_ref', $ref)->firstOrFail();
         
+        if ($application->user_id !== auth()->id() && !auth()->user()->is_admin) {
+            abort(403);
+        }
+        
         // Find the pending payment with receipt
         $payment = Payment::where('application_id', $application->id)
                           ->where('status', 'PENDING')
@@ -240,6 +256,10 @@ class PaymentController extends Controller
     public function deleteReceipt($ref)
     {
         $application = Application::where('application_ref', $ref)->firstOrFail();
+
+        if ($application->user_id !== auth()->id()) {
+            abort(403);
+        }
 
         if ($application->payment_status == 'PAID') {
             return back()->with('error', 'Cannot delete receipt for an already paid application.');

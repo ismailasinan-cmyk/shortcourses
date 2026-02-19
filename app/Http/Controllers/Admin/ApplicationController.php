@@ -201,6 +201,13 @@ class ApplicationController extends Controller
         ]);
 
         $count = count($request->ids);
+        
+        // Prevent deleting PAID applications
+        $paidCount = \App\Models\Application::whereIn('id', $request->ids)->where('payment_status', 'PAID')->count();
+        if ($paidCount > 0) {
+            return back()->with('error', "Cannot delete applications with PAID status. $paidCount selected application(s) have been paid for.");
+        }
+
         \App\Models\Application::whereIn('id', $request->ids)->delete();
 
         return back()->with('success', "$count application(s) deleted successfully.");
