@@ -65,15 +65,12 @@
     <div class="card glass-card">
         <div class="card-body p-0">
             <div class="table-responsive">
-                <form id="batchDeleteForm" action="{{ route('admin.applications.batch-destroy') }}" method="POST" onsubmit="return confirm('Are you sure you want to delete these applications? This action cannot be undone.');">
-                    @csrf
-                    @method('DELETE')
-                    <div class="mb-3 d-none" id="batchActions">
-                        <button type="submit" class="btn btn-danger btn-sm shadow-sm rounded-pill px-3">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                            {{ __('Delete Selected') }} (<span id="selectedCount">0</span>)
-                        </button>
-                    </div>
+                <div class="mb-3 d-none" id="batchActions">
+                    <button type="button" class="btn btn-danger btn-sm shadow-sm rounded-pill px-3" onclick="submitBatchDelete()">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        {{ __('Delete Selected') }} (<span id="selectedCount">0</span>)
+                    </button>
+                </div>
                 <table class="table table-hover mb-0">
                     <thead class="bg-light bg-opacity-50 text-muted small">
                         <tr>
@@ -160,7 +157,6 @@
                         @endforeach
                     </tbody>
                 </table>
-                </form>
             </div>
             @if($applications->hasPages())
                 <div class="px-4 py-3 border-top bg-light bg-opacity-25">
@@ -186,6 +182,12 @@
     }
 </style>
 @endpush
+
+<form id="batchDeleteForm" action="{{ route('admin.applications.batch-destroy') }}" method="POST" class="d-none">
+    @csrf
+    @method('DELETE')
+    <div id="batchDeleteInputs"></div>
+</form>
 
 <!-- Receipt Preview Modal -->
 <div class="modal fade" id="receiptPreviewModal" tabindex="-1" aria-labelledby="receiptPreviewModalLabel" aria-hidden="true">
@@ -302,5 +304,23 @@
     checkboxes.forEach(cb => {
         cb.addEventListener('change', updateBatchActions);
     });
+
+    function submitBatchDelete() {
+        if (!confirm('Are you sure you want to delete these applications? This action cannot be undone.')) return;
+        
+        const form = document.getElementById('batchDeleteForm');
+        const inputsContainer = document.getElementById('batchDeleteInputs');
+        inputsContainer.innerHTML = ''; // Clear previous
+        
+        document.querySelectorAll('.batch-checkbox:checked').forEach(cb => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'ids[]';
+            input.value = cb.value;
+            inputsContainer.appendChild(input);
+        });
+        
+        form.submit();
+    }
 </script>
 @endpush
