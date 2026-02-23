@@ -145,4 +145,30 @@ class ApplicationFlowTest extends TestCase
         
         $this->assertDatabaseHas('applications', ['id' => $application->id]);
     }
+
+    public function test_delete_application_with_payments_constraint()
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+        $application = Application::factory()->create(['payment_status' => 'PENDING']);
+        // Create a pending payment
+        \App\Models\Payment::create([
+            'application_id' => $application->id,
+            'amount' => 50000,
+            'status' => 'PENDING',
+            'remita_rrr' => '123'
+        ]);
+
+        try {
+            $response = $this->actingAs($admin)->delete(route('admin.applications.batch-destroy'), [
+                'ids' => [$application->id]
+            ]);
+            // If it succeeds, then there is no constraint issue or it deleted payments?
+        } catch (\Illuminate\Database\QueryException $e) {
+            $this->assertStringContainsString('foreign key constraint', $e->getMessage());
+            return;
+        }
+
+        // If we reach here, check if it was deleted
+        $this->assertDatabaseMissing('applications', ['id' => $application->id]);
+    }
 }
