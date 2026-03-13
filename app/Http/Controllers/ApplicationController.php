@@ -268,16 +268,20 @@ class ApplicationController extends Controller
 
     public function viewRegistrationProcedure()
     {
+        \Illuminate\Support\Facades\Log::info('View Registration Procedure Request Received');
         $setting = \App\Models\Setting::where('key', 'payment_procedure_path')->first();
 
         if (!$setting || !$setting->value) {
+            \Illuminate\Support\Facades\Log::warning('Registration procedure not configured');
             return response('Registration procedure document not configured. Please upload it in Admin Settings.', 404);
         }
 
         if (!\Illuminate\Support\Facades\Storage::disk('public')->exists($setting->value)) {
+            \Illuminate\Support\Facades\Log::warning('Registration procedure file missing: ' . $setting->value);
             return response('Registration procedure file not found in storage (' . $setting->value . '). Please re-upload it in Admin Settings.', 404);
         }
 
+        \Illuminate\Support\Facades\Log::info('Serving Registration Procedure: ' . $setting->value);
         return \Illuminate\Support\Facades\Storage::disk('public')->response($setting->value);
     }
 }

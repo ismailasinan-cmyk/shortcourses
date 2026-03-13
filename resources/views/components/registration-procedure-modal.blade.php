@@ -12,7 +12,7 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-0 bg-light" style="height: 75vh;">
-                <iframe id="registrationProcedureFrame" src="{{ route('registration-procedure.view') }}" frameborder="0" style="width: 100%; height: 100%;"></iframe>
+                <iframe id="registrationProcedureFrame" src="/registration-guidelines" frameborder="0" style="width: 100%; height: 100%;"></iframe>
             </div>
             <div class="modal-footer border-0 p-4 bg-white d-flex justify-content-between align-items-center">
                 <div class="text-muted small">

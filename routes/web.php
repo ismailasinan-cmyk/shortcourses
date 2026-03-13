@@ -31,7 +31,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/password/change', [App\Http\Controllers\HomeController::class, 'updatePassword'])->name('password.update');
 });
 
-Route::get('/registration-procedure/view', [App\Http\Controllers\ApplicationController::class, 'viewRegistrationProcedure'])->name('registration-procedure.view');
+Route::get('/registration-guidelines', [App\Http\Controllers\ApplicationController::class, 'viewRegistrationProcedure'])->name('registration-procedure.view');
 
 Route::post('/payments/remita/init', [App\Http\Controllers\PaymentController::class, 'init'])->name('payments.remita.init');
 Route::any('/payments/remita/callback', [App\Http\Controllers\PaymentController::class, 'callback'])->name('payments.remita.callback');
