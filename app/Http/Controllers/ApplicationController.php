@@ -271,11 +271,11 @@ class ApplicationController extends Controller
         $setting = \App\Models\Setting::where('key', 'payment_procedure_path')->first();
 
         if (!$setting || !$setting->value) {
-            abort(404, 'Registration procedure document not configured. Please upload it in Admin Settings.');
+            return response('Registration procedure document not configured. Please upload it in Admin Settings.', 404);
         }
 
         if (!\Illuminate\Support\Facades\Storage::disk('public')->exists($setting->value)) {
-            abort(404, 'Registration procedure file not found in storage (' . $setting->value . '). Please re-upload it in Admin Settings.');
+            return response('Registration procedure file not found in storage (' . $setting->value . '). Please re-upload it in Admin Settings.', 404);
         }
 
         return \Illuminate\Support\Facades\Storage::disk('public')->response($setting->value);
