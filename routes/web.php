@@ -2,15 +2,6 @@
 
 use Illuminate\Support\Facades\Route;
 
-Route::get('/debug-routing', function() {
-    return response()->json([
-        'status' => 'routing_works',
-        'timestamp' => now()->toDateTimeString(),
-        'app_url' => config('app.url'),
-        'app_env' => config('app.env'),
-    ]);
-});
-
 Route::get('/', function () {
     $courses = \App\Models\ShortCourse::where('status', true)->get();
     return view('welcome', compact('courses'));

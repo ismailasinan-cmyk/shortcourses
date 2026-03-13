@@ -7,7 +7,7 @@
             <img src="{{ asset('images/acetel-logo.jpeg') }}" alt="ACETEL Logo" width="120" height="120" class="rounded-circle shadow-lg bg-white p-2 border border-4 border-teal border-opacity-25 img-fluid" style="max-width: 100px; height: auto; @media(min-width: 768px) { max-width: 120px; }">
         </div>
         <h1 class="display-5 display-md-3 fw-bold mb-3 text-white">{{ config('app.name', 'ACETEL Short Courses') }}</h1>
-        <p class="lead mb-5 text-white-50" style="max-width: 600px; margin: 0 auto;">{{ __('Advance your career with our specialized, industry-recognized short courses designed for the modern professional.') }} (v2.1)</p>
+        <p class="lead mb-5 text-white-50" style="max-width: 600px; margin: 0 auto;">{{ __('Advance your career with our specialized, industry-recognized short courses designed for the modern professional.') }}</p>
         
         <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
             @auth
