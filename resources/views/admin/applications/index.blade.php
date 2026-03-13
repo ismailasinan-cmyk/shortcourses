@@ -161,7 +161,7 @@
                                         </div>
                                     @endforeach
 
-                                    @if($app->application_fee_status === 'PAID' && $app->course_fee_status === 'PAID')
+                                    @if($app->admission_status === 'ADMITTED' && $app->application_fee_status === 'PAID' && $app->course_fee_status === 'PAID')
                                         @if($app->certificate_path)
                                             <div class="mt-1 text-end">
                                                 <button type="button" class="badge bg-success bg-opacity-10 text-success rounded-pill px-2 py-1 small mb-1 border-0" 
