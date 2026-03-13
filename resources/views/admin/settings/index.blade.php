@@ -28,7 +28,7 @@
                                 <div>
                                     <h6 class="fw-bold mb-1">{{ __('Current Document') }}</h6>
                                     @if($setting && $setting->value)
-                                        <a href="{{ Storage::url($setting->value) }}" target="_blank" class="text-decoration-none small fw-bold text-primary">
+                                    <a href="{{ Storage::disk('public')->url($setting->value) }}" target="_blank" class="text-decoration-none small fw-bold text-primary">
                                             {{ __('View Current File') }}
                                         </a>
                                     @else
