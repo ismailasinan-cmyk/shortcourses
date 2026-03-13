@@ -17,8 +17,8 @@
                     @endif
 
                     <div class="mb-5">
-                        <h5 class="fw-bold mb-3">{{ __('Payment Procedure') }}</h5>
-                        <p class="text-muted small mb-4">{{ __('Upload the document that explains the payment process to applicants. This will be available for download in the payment modal.') }}</p>
+                        <h5 class="fw-bold mb-3">{{ __('Registration Procedure') }}</h5>
+                        <p class="text-muted small mb-4">{{ __('Upload the document that explains the registration process to applicants. This will be available for viewing in a modal.') }}</p>
 
                         <div class="card bg-light border-0 rounded-4 p-4 mb-4">
                             <div class="d-flex align-items-center mb-3">

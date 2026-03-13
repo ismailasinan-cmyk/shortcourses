@@ -9,7 +9,15 @@
 
                 <div class="card-body">
                     @if(session('success'))
-                        <div class="alert alert-success">{{ session('success') }}</div>
+                        <div class="alert alert-success border-0 rounded-4 shadow-sm mb-4 d-flex align-items-center justify-content-between">
+                            <div>
+                                <strong class="d-block mb-1">{{ __('Success!') }}</strong>
+                                {{ session('success') }}
+                            </div>
+                            <button type="button" class="btn btn-primary rounded-pill btn-sm px-3" data-bs-toggle="modal" data-bs-target="#registrationProcedureModal">
+                                {{ __('View Registration Procedure') }}
+                            </button>
+                        </div>
                     @endif
 
                     <div class="alert alert-info">
@@ -104,4 +112,5 @@
         </div>
     </div>
 </div>
+@include('components.registration-procedure-modal')
 @endsection

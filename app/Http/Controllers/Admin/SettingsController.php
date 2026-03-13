@@ -36,6 +36,6 @@ class SettingsController extends Controller
             );
         }
 
-        return back()->with('success', 'Payment procedure uploaded successfully.');
+        return back()->with('success', 'Registration procedure uploaded successfully.');
     }
 }

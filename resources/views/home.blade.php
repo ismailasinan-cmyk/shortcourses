@@ -143,6 +143,14 @@
                                                             </button>
                                                         </li>
                                                     @endif
+
+                                                    <li><hr class="dropdown-divider"></li>
+                                                    <li>
+                                                        <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2" data-bs-toggle="modal" data-bs-target="#registrationProcedureModal">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+                                                            {{ __('Registration Procedure') }}
+                                                        </button>
+                                                    </li>
                                                 </ul>
                                             </div>
                                         </td>
@@ -253,4 +261,5 @@
     @endif
 @endforeach
 
+@include('components.registration-procedure-modal')
 @endsection

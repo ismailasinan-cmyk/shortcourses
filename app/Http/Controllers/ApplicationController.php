@@ -261,4 +261,15 @@ class ApplicationController extends Controller
 
         return \Illuminate\Support\Facades\Storage::disk('public')->download($setting->value);
     }
+
+    public function viewRegistrationProcedure()
+    {
+        $setting = \App\Models\Setting::where('key', 'payment_procedure_path')->first();
+
+        if (!$setting || !$setting->value || !\Illuminate\Support\Facades\Storage::disk('public')->exists($setting->value)) {
+            abort(404, 'Registration procedure document not found.');
+        }
+
+        return \Illuminate\Support\Facades\Storage::disk('public')->response($setting->value);
+    }
 }
