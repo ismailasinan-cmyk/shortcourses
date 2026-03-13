@@ -113,6 +113,16 @@ class PaymentController extends Controller
             ]
         );
 
+        // Notify Admins about the receipt upload
+        try {
+            $admins = \App\Models\User::where('is_admin', true)->get();
+            if ($admins->isNotEmpty()) {
+                \Illuminate\Support\Facades\Mail::to($admins)->send(new \App\Mail\PaymentReceiptUploaded($application, $payment));
+            }
+        } catch (\Exception $e) {
+            Log::error('Admin Notification Error: ' . $e->getMessage());
+        }
+
         if ($isPaid) {
             $this->updateApplicationFeeStatuses($payment);
             return redirect()->route('applications.review', $application->application_ref)->with('success', 'Payment confirmed successfully!');
