@@ -23,6 +23,21 @@
                         @csrf
                         
                         <div class="mb-4">
+                            <label for="payment_type" class="form-label fw-bold text-muted small text-uppercase">{{ __('Fee Type') }} <span class="text-danger">*</span></label>
+                            @php
+                                $selectedType = request()->query('type', old('payment_type', 'BOTH'));
+                            @endphp
+                            <select name="payment_type" id="payment_type" class="form-select form-select-lg rounded-pill bg-light border-0 px-4" required>
+                                <option value="APPLICATION_FEE" {{ $selectedType === 'APPLICATION_FEE' ? 'selected' : '' }}>{{ __('Application Fee (₦' . number_format($application->application_fee_amount, 2) . ')') }}</option>
+                                <option value="COURSE_FEE" {{ $selectedType === 'COURSE_FEE' ? 'selected' : '' }}>{{ __('Course Fee (₦' . number_format($application->amount, 2) . ')') }}</option>
+                                <option value="BOTH" {{ $selectedType === 'BOTH' ? 'selected' : '' }}>{{ __('Both Fees (₦' . number_format($application->application_fee_amount + $application->amount, 2) . ')') }}</option>
+                            </select>
+                            @error('payment_type')
+                                <div class="text-danger small mt-1 ps-3">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="mb-4">
                             <label for="rrr" class="form-label fw-bold text-muted small text-uppercase">{{ __('Remita Retrieval Reference (RRR)') }} <span class="text-danger">*</span></label>
                             <input type="text" class="form-control form-control-lg rounded-pill bg-light border-0 px-4" id="rrr" name="rrr" placeholder="e.g. 123456789012" value="{{ old('rrr') }}" required maxlength="12">
                             @error('rrr')

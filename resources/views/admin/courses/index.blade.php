@@ -78,16 +78,4 @@
 </div>
 @endsection
 
-@push('styles')
-<style>
-    .pagination .page-item:first-child,
-    .pagination .page-item:last-child {
-        display: none !important;
-    }
-    /* Remove arrows from selects */
-    .form-select {
-        background-image: none !important;
-        padding-right: 0.75rem !important;
-    }
-</style>
-@endpush
+@endsection

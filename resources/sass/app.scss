@@ -205,3 +205,38 @@ h6 {
     background: linear-gradient(to right, transparent, #E5E7EB, transparent);
     margin: 2rem 0;
 }
+
+// Global Pagination Refinement
+.pagination {
+    .page-item {
+        &:first-child,
+        &:last-child {
+            display: none !important;
+        }
+        
+        .page-link {
+            border-radius: 8px !important;
+            margin: 0 2px;
+            border: none;
+            color: #4B5563;
+            font-weight: 500;
+            
+            &:hover {
+                background-color: rgba(30, 58, 138, 0.05);
+                color: $primary;
+            }
+        }
+        
+        &.active .page-link {
+            background-color: $primary !important;
+            color: white !important;
+            box-shadow: 0 4px 6px -1px rgba(30, 58, 138, 0.2);
+        }
+    }
+}
+
+// Global Form Select Refinement
+.form-select {
+    background-image: none !important;
+    padding-right: 0.75rem !important;
+}

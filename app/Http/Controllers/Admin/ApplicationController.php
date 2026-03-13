@@ -64,7 +64,7 @@ class ApplicationController extends Controller
         $columns = [
             'Ref', 'Surname', 'First Name', 'Other Name', 'Email', 'Phone', 
             'Gender', 'Address', 'State', 'LGA', 'Course', 'Amount', 
-            'Payment Status', 'SSCE Type', 'Exam Year', 'Exam No', 'Date'
+            'App Fee Status', 'Course Fee Status', 'Payment Status', 'SSCE Type', 'Exam Year', 'Exam No', 'Date'
         ];
 
         $callback = function() use($applications, $columns) {
@@ -85,6 +85,8 @@ class ApplicationController extends Controller
                     $app->lga,
                     $app->course->course_name,
                     $app->amount,
+                    $app->application_fee_status,
+                    $app->course_fee_status,
                     $app->payment_status,
                     $app->ssce_type,
                     $app->ssce_year,
@@ -147,12 +149,17 @@ class ApplicationController extends Controller
 
         return back()->with('success', 'Application status updated successfully.');
     }
-    public function viewReceipt($id)
+    public function viewReceipt(Request $request, $id)
     {
         $application = \App\Models\Application::findOrFail($id);
         
-        // Find latest payment with receipt
-        $payment = $application->payments()->whereNotNull('receipt_path')->latest()->first();
+        $paymentId = $request->input('payment_id');
+        if ($paymentId) {
+            $payment = \App\Models\Payment::where('application_id', $application->id)->findOrFail($paymentId);
+        } else {
+            // Find latest payment with receipt
+            $payment = $application->payments()->whereNotNull('receipt_path')->latest()->first();
+        }
 
         if (!$payment || !\Illuminate\Support\Facades\Storage::disk('private')->exists($payment->receipt_path)) {
             return back()->with('error', 'Receipt file not found.');
@@ -161,11 +168,16 @@ class ApplicationController extends Controller
         return \Illuminate\Support\Facades\Storage::disk('private')->response($payment->receipt_path);
     }
 
-    public function approvePayment($id)
+    public function approvePayment(Request $request, $id)
     {
         $application = \App\Models\Application::findOrFail($id);
         
-        $payment = $application->payments()->where('status', 'PENDING')->latest()->first();
+        $paymentId = $request->input('payment_id');
+        if ($paymentId) {
+            $payment = \App\Models\Payment::where('application_id', $application->id)->findOrFail($paymentId);
+        } else {
+            $payment = $application->payments()->where('status', 'PENDING')->latest()->first();
+        }
 
         if (!$payment) {
              return back()->with('error', 'No pending payment found to approve.');
@@ -176,12 +188,25 @@ class ApplicationController extends Controller
             'status' => 'VERIFIED',
             'verified_at' => now(),
             'paid_at' => now(),
-            'channel' => 'MANUAL_APPROVAL' // Indicate admin approval
+            'channel' => 'MANUAL_APPROVAL' 
         ]);
         
-        // Update Application Status
-        $application->payment_status = 'PAID';
-        $application->amount = $payment->amount; // Ensure amount matches
+        // Update Application Status based on payment type
+        $type = $payment->payment_type;
+        if ($type === 'APPLICATION_FEE') {
+            $application->application_fee_status = 'PAID';
+        } elseif ($type === 'COURSE_FEE') {
+            $application->course_fee_status = 'PAID';
+        } elseif ($type === 'BOTH') {
+            $application->application_fee_status = 'PAID';
+            $application->course_fee_status = 'PAID';
+        }
+
+        // Check if overall payment status should be PAID
+        if ($application->application_fee_status === 'PAID' && $application->course_fee_status === 'PAID') {
+            $application->payment_status = 'PAID';
+        }
+
         $application->save();
 
         try {
@@ -191,6 +216,39 @@ class ApplicationController extends Controller
         }
 
         return back()->with('success', 'Payment approved successfully.');
+    }
+
+    public function uploadCertificate(Request $request, $id)
+    {
+        $request->validate([
+            'certificate' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120'
+        ]);
+
+        $application = \App\Models\Application::findOrFail($id);
+
+        if ($request->hasFile('certificate')) {
+            // Delete old certificate if exists
+            if ($application->certificate_path && \Illuminate\Support\Facades\Storage::disk('private')->exists($application->certificate_path)) {
+                \Illuminate\Support\Facades\Storage::disk('private')->delete($application->certificate_path);
+            }
+
+            $path = $request->file('certificate')->store('certificates', 'private');
+            
+            $application->update([
+                'certificate_path' => $path,
+                'certificate_issued_at' => now()
+            ]);
+
+            try {
+                \Illuminate\Support\Facades\Mail::to($application->email)->send(new \App\Mail\CertificateReady($application));
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Certificate Notification Mail failed: ' . $e->getMessage());
+            }
+
+            return back()->with('success', 'Certificate uploaded successfully student has been notified.');
+        }
+
+        return back()->with('error', 'Failed to upload certificate.');
     }
 
     public function batchDestroy(Request $request)
@@ -211,5 +269,15 @@ class ApplicationController extends Controller
         \App\Models\Application::whereIn('id', $request->ids)->delete();
 
         return back()->with('success', "$count application(s) deleted successfully.");
+    }
+    public function viewCertificate($id)
+    {
+        $application = \App\Models\Application::findOrFail($id);
+        
+        if (!$application->certificate_path || !\Illuminate\Support\Facades\Storage::disk('private')->exists($application->certificate_path)) {
+            return response()->json(['error' => 'Certificate file not found.'], 404);
+        }
+
+        return \Illuminate\Support\Facades\Storage::disk('private')->response($application->certificate_path);
     }
 }

@@ -22,6 +22,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/applications/{ref}/review', [App\Http\Controllers\ApplicationController::class, 'review'])->name('applications.review');
     Route::get('/applications/{ref}/admission/view', [App\Http\Controllers\ApplicationController::class, 'viewAdmission'])->name('applications.view-admission');
     Route::get('/applications/{ref}/admission', [App\Http\Controllers\ApplicationController::class, 'downloadAdmission'])->name('applications.download-admission');
+    Route::get('/applications/{ref}/certificate', [App\Http\Controllers\ApplicationController::class, 'downloadCertificate'])->name('applications.download-certificate');
     Route::get('/status', [App\Http\Controllers\ApplicationController::class, 'statusForm'])->name('status');
     Route::post('/status', [App\Http\Controllers\ApplicationController::class, 'checkStatus'])->name('status.check');
     Route::post('/applications/upload-receipt', [App\Http\Controllers\ApplicationController::class, 'uploadReceipt'])->name('applications.upload-receipt');
@@ -33,7 +34,7 @@ Route::middleware(['auth'])->group(function () {
 
 Route::get('/registration-guidelines', [App\Http\Controllers\ApplicationController::class, 'viewRegistrationProcedure'])->name('registration-procedure.view');
 
-Route::post('/payments/remita/init', [App\Http\Controllers\PaymentController::class, 'init'])->name('payments.remita.init');
+Route::post('/payments/remita/init', [App\Http\Controllers\PaymentController::class, 'init'])->name('applications.payment.init');
 Route::any('/payments/remita/callback', [App\Http\Controllers\PaymentController::class, 'callback'])->name('payments.remita.callback');
 
 Route::get('/applications/{ref}/payment/receipt', [App\Http\Controllers\PaymentController::class, 'viewReceipt'])->name('applications.payment.receipt.view');
@@ -57,6 +58,8 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['auth', 'a
     Route::get('/applications/{id}/download-ssce', [App\Http\Controllers\Admin\ApplicationController::class, 'downloadSsce'])->name('applications.download-ssce');
     Route::get('/applications/{id}/view-receipt', [App\Http\Controllers\Admin\ApplicationController::class, 'viewReceipt'])->name('applications.view-receipt');
     Route::post('/applications/{id}/approve-payment', [App\Http\Controllers\Admin\ApplicationController::class, 'approvePayment'])->name('applications.approve-payment');
+    Route::post('/applications/{id}/upload-certificate', [App\Http\Controllers\Admin\ApplicationController::class, 'uploadCertificate'])->name('applications.upload-certificate');
+    Route::get('/applications/{id}/view-certificate', [App\Http\Controllers\Admin\ApplicationController::class, 'viewCertificate'])->name('applications.view-certificate');
     
     Route::get('/reports', [App\Http\Controllers\Admin\ReportController::class, 'index'])->name('reports.index');
     Route::post('/reports/export', [App\Http\Controllers\Admin\ReportController::class, 'export'])->name('reports.export');

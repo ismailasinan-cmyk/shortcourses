@@ -22,7 +22,7 @@ class RemitaService
 
     public function initializePayment($application)
     {
-        $orderId = $application->application_ref;
+        $orderId = $application->application_ref . '-' . time();
         $amount = $application->amount;
         $hash = hash('sha512', $this->merchantId . $this->serviceTypeId . $orderId . $amount . $this->apiKey);
 

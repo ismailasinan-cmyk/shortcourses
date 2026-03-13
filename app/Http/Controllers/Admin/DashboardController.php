@@ -12,6 +12,8 @@ class DashboardController extends Controller
         $stats = [
             'total_applications' => \App\Models\Application::count(),
             'paid_applications' => \App\Models\Application::where('payment_status', 'PAID')->count(),
+            'app_fees_paid' => \App\Models\Application::where('application_fee_status', 'PAID')->count(),
+            'course_fees_paid' => \App\Models\Application::where('course_fee_status', 'PAID')->count(),
             'admitted_applications' => \App\Models\Application::where('admission_status', 'ADMITTED')->count(),
             'total_courses' => \App\Models\ShortCourse::count(),
         ];

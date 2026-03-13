@@ -86,6 +86,10 @@ class ApplicationController extends Controller
                     }
                 } while ($exists);
 
+                // Get Application Fee from settings
+                $appFeeSetting = \App\Models\Setting::where('key', 'application_fee')->first();
+                $appFee = $appFeeSetting ? (float)$appFeeSetting->value : 5000.00;
+
                 $application = \App\Models\Application::create([
                     'user_id' => auth()->id(),
                     'application_ref' => $ref,
@@ -112,7 +116,10 @@ class ApplicationController extends Controller
                     'degree_class' => $validated['degree_class'] ?? null,
 
                     'short_course_id' => $course->id,
-                    'amount' => $course->fee, // Store frozen amount
+                    'amount' => $course->fee, // This is the Course Fee
+                    'application_fee_amount' => $appFee,
+                    'application_fee_status' => 'PENDING',
+                    'course_fee_status' => 'PENDING',
                     'payment_status' => 'PENDING',
                     'locale' => app()->getLocale(),
                 ]);
@@ -202,12 +209,29 @@ class ApplicationController extends Controller
             ->with(['course' => fn($q) => $q->withTrashed()])
             ->firstOrFail();
 
-        if ($application->admission_status !== 'ADMITTED') {
-            return back()->with('error', 'Admission letter is not available.');
+        if ($application->admission_status !== 'ADMITTED' || $application->application_fee_status !== 'PAID') {
+            return back()->with('error', 'Admission letter is not available yet. Ensure application fee is paid.');
         }
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.admission_letter', compact('application'));
         return $pdf->download('admission_letter_' . $application->application_ref . '.pdf');
+    }
+
+    public function downloadCertificate($ref)
+    {
+        $application = \App\Models\Application::where('application_ref', $ref)
+            ->where('user_id', auth()->id())
+            ->firstOrFail();
+
+        if (!$application->certificate_path || !\Illuminate\Support\Facades\Storage::disk('private')->exists($application->certificate_path)) {
+            return back()->with('error', 'Certificate not found or not yet issued.');
+        }
+
+        if ($application->payment_status !== 'PAID') {
+            return back()->with('error', 'All fees must be fully paid and verified before downloading the certificate.');
+        }
+
+        return \Illuminate\Support\Facades\Storage::disk('private')->download($application->certificate_path, 'Certificate_' . $application->application_ref . '.' . pathinfo($application->certificate_path, PATHINFO_EXTENSION));
     }
 
     public function viewAdmission($ref)

@@ -9,6 +9,22 @@
                     <h4 class="mb-0 fw-bold">{{ __('Payment Instructions') }}</h4>
                 </div>
                 <div class="card-body p-5">
+                    @php
+                        $type = request()->query('type', 'BOTH');
+                        $amount = 0;
+                        $label = '';
+                        if ($type === 'APPLICATION_FEE') {
+                            $amount = $application->application_fee_amount;
+                            $label = __('Application Fee');
+                        } elseif ($type === 'COURSE_FEE') {
+                            $amount = $application->amount;
+                            $label = __('Course Fee');
+                        } else {
+                            $amount = $application->application_fee_amount + $application->amount;
+                            $label = __('Total Payment (Application + Course Fee)');
+                        }
+                    @endphp
+
                     <div class="alert alert-info border-0 rounded-4 d-flex align-items-center mb-4">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-3 flex-shrink-0"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
                         <div>
@@ -30,8 +46,8 @@
                                 <hr class="my-3 text-muted opacity-25">
                             </div>
                             <div class="col-sm-6">
-                                <small class="text-uppercase text-muted fw-bold tracking-wider">{{ __('Amount Due') }}</small>
-                                <div class="h4 mb-0 fw-bold text-primary mt-1">₦{{ number_format($application->amount, 2) }}</div>
+                                <small class="text-uppercase text-muted fw-bold tracking-wider">{{ $label }}</small>
+                                <div class="h4 mb-0 fw-bold text-primary mt-1">₦{{ number_format($amount, 2) }}</div>
                             </div>
                             <div class="col-sm-6 text-sm-end">
                                 <button type="button" class="btn btn-outline-info rounded-pill btn-sm mt-1" data-bs-toggle="modal" data-bs-target="#registrationProcedureModal">
@@ -62,7 +78,7 @@
                         
                         <div class="text-center">
                             <span class="text-muted small">{{ __('Already paid?') }}</span>
-                            <a href="{{ route('applications.confirm', $application->application_ref) }}" class="text-decoration-none fw-bold ms-1">
+                            <a href="{{ route('applications.confirm', ['ref' => $application->application_ref, 'type' => $type]) }}" class="text-decoration-none fw-bold ms-1">
                                 {{ __('Click here to confirm payment') }}
                             </a>
                         </div>

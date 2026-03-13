@@ -38,7 +38,7 @@ class ReportController extends Controller
             $file = fopen('php://output', 'w');
             
             if ($request->type === 'applications') {
-                fputcsv($file, ['Ref', 'Name', 'Email', 'Course', 'Amount', 'Payment Status', 'Admission Status', 'Date']);
+                fputcsv($file, ['Ref', 'Name', 'Email', 'Course', 'Amount', 'App Fee Status', 'Course Fee Status', 'Payment Status', 'Admission Status', 'Date']);
                 foreach ($query->latest()->cursor() as $row) {
                     fputcsv($file, [
                         $row->application_ref,
@@ -46,6 +46,8 @@ class ReportController extends Controller
                         $row->email,
                         $row->course->course_name ?? 'N/A',
                         $row->amount,
+                        $row->application_fee_status,
+                        $row->course_fee_status,
                         $row->payment_status,
                         $row->admission_status,
                         $row->created_at->format('Y-m-d H:i:s'),

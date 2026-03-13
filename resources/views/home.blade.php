@@ -56,18 +56,28 @@
                                             <div class="fw-bold text-primary">{{ $application->course->course_name }}</div>
                                         </td>
                                         <td class="py-4">
-                                            <div class="fw-bold text-dark">₦{{ number_format($application->amount, 2) }}</div>
+                                            <div class="fw-bold text-dark">₦{{ number_format($application->amount + $application->application_fee_amount, 2) }}</div>
+                                            <div class="small text-muted">{{ __('Total Fee') }}</div>
                                         </td>
                                         <td class="py-4">
                                             <div class="d-flex flex-column gap-2 mb-0">
-                                                <!-- Payment Status -->
-                                                <div class="d-flex align-items-center">
-                                                    <span class="badge bg-{{ $application->payment_status === 'PAID' ? 'success' : 'warning' }} bg-opacity-10 text-{{ $application->payment_status === 'PAID' ? 'success' : 'warning' }} rounded-pill px-2 py-1 small">
-                                                        {{ $application->payment_status }}
+                                                <!-- App Fee -->
+                                                <div class="d-flex align-items-center justify-content-between">
+                                                    <span class="small text-muted me-2">{{ __('App Fee:') }}</span>
+                                                    <span class="badge bg-{{ $application->application_fee_status === 'PAID' ? 'success' : 'warning' }} bg-opacity-10 text-{{ $application->application_fee_status === 'PAID' ? 'success' : 'warning' }} rounded-pill px-2 py-1 small">
+                                                        {{ $application->application_fee_status }}
+                                                    </span>
+                                                </div>
+                                                <!-- Course Fee -->
+                                                <div class="d-flex align-items-center justify-content-between">
+                                                    <span class="small text-muted me-2">{{ __('Course:') }}</span>
+                                                    <span class="badge bg-{{ $application->course_fee_status === 'PAID' ? 'success' : 'secondary' }} bg-opacity-10 text-{{ $application->course_fee_status === 'PAID' ? 'success' : 'secondary' }} rounded-pill px-2 py-1 small">
+                                                        {{ $application->course_fee_status }}
                                                     </span>
                                                 </div>
                                                 <!-- Admission Status -->
-                                                <div class="d-flex align-items-center">
+                                                <div class="d-flex align-items-center justify-content-between border-top pt-1 mt-1">
+                                                    <span class="small text-muted me-2">{{ __('Admission:') }}</span>
                                                     <span class="badge bg-{{ $application->admission_status === 'ADMITTED' ? 'success' : ($application->admission_status === 'PENDING' ? 'secondary' : 'danger') }} bg-opacity-10 text-{{ $application->admission_status === 'ADMITTED' ? 'success' : ($application->admission_status === 'PENDING' ? 'secondary' : 'danger') }} rounded-pill px-2 py-1 small">
                                                         {{ $application->admission_status }}
                                                     </span>
@@ -76,8 +86,9 @@
                                         </td>
                                         <td class="py-4" style="min-width: 150px;">
                                             @php
-                                                $progress = 33;
-                                                if ($application->payment_status === 'PAID') $progress = 66;
+                                                $progress = 10;
+                                                if ($application->application_fee_status === 'PAID') $progress = 40;
+                                                if ($application->course_fee_status === 'PAID' && $application->application_fee_status === 'PAID') $progress = 80;
                                                 if ($application->admission_status === 'ADMITTED') $progress = 100;
                                             @endphp
                                             <div class="progress rounded-pill bg-light" style="height: 6px;">
@@ -111,27 +122,12 @@
                                                     @endif
 
                                                     @if($application->payment_status === 'PENDING')
-                                                        @php
-                                                            $awaitingConfirmation = $application->payments->filter(function($p) {
-                                                                return $p->status === 'PENDING' && !empty($p->receipt_path);
-                                                            })->isNotEmpty();
-                                                        @endphp
-
-                                                        @if($awaitingConfirmation)
-                                                             <li>
-                                                                <span class="dropdown-item d-flex align-items-center gap-2 py-2 text-muted disabled">
-                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                                                                    {{ __('Processing Payment') }}
-                                                                </span>
-                                                            </li>
-                                                        @else
-                                                            <li>
-                                                                <a class="dropdown-item d-flex align-items-center gap-2 py-2 text-warning fw-bold" href="{{ route('applications.payment', $application->application_ref) }}">
-                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
-                                                                    {{ __('Pay Now') }}
-                                                                </a>
-                                                            </li>
-                                                        @endif
+                                                        <li>
+                                                            <a class="dropdown-item d-flex align-items-center gap-2 py-2 text-warning fw-bold" href="{{ route('applications.review', $application->application_ref) }}">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                                                                {{ __('Continue to Payment') }}
+                                                            </a>
+                                                        </li>
                                                     @endif
 
                                                     @if($application->admission_status === 'ADMITTED')
@@ -140,6 +136,15 @@
                                                             <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2 text-success fw-bold" data-bs-toggle="modal" data-bs-target="#admissionModal{{ $application->id }}">
                                                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
                                                                 {{ __('Admission Letter') }}
+                                                            </button>
+                                                        </li>
+                                                    @endif
+
+                                                    @if($application->certificate_path)
+                                                        <li>
+                                                            <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2 text-primary fw-bold" data-bs-toggle="modal" data-bs-target="#certificateModal{{ $application->id }}">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-award"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>
+                                                                {{ __('Download Certificate') }}
                                                             </button>
                                                         </li>
                                                     @endif
@@ -226,7 +231,7 @@
                     </div>
                     <div class="modal-footer border-0">
                          <button type="button" class="btn btn-light rounded-pill" data-bs-dismiss="modal">{{ __('Close') }}</button>
-                        <a href="#" class="btn btn-primary rounded-pill px-4 fw-bold disabled" aria-disabled="true" tabindex="-1" role="button">
+                        <a href="{{ route('applications.download-admission', $application->application_ref) }}" class="btn btn-primary rounded-pill px-4 fw-bold">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                             {{ __('Download PDF') }}
                         </a>
@@ -253,6 +258,38 @@
                         <a href="{{ route('receipt.download', $application->application_ref) }}" class="btn btn-teal rounded-pill px-4 fw-bold">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                             {{ __('Download PDF') }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    @if($application->certificate_path)
+        <!-- Certificate Modal for {{ $application->application_ref }} -->
+        <div class="modal fade" id="certificateModal{{ $application->id }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content border-0 shadow-lg rounded-4">
+                    <div class="modal-header border-0 pb-0">
+                        <h5 class="modal-title fw-bold text-primary">{{ __('Course Certificate') }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4 text-center">
+                        <div class="mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-primary opacity-25 mb-3"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>
+                            <h4 class="fw-bold">{{ __('Congratulations!') }}</h4>
+                            <p class="text-muted">{{ __('Your certificate for') }} <strong>{{ $application->course->course_name }}</strong> {{ __('is ready.') }}</p>
+                        </div>
+                        <div class="p-4 bg-light rounded-4 mb-4">
+                            <div class="text-muted small mb-2">{{ __('Issued on') }}</div>
+                            <div class="fw-bold">{{ $application->certificate_issued_at ? \Carbon\Carbon::parse($application->certificate_issued_at)->format('M d, Y') : __('N/A') }}</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 justify-content-center pb-4">
+                        <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">{{ __('Close') }}</button>
+                        <a href="{{ route('applications.download-certificate', $application->application_ref) }}" class="btn btn-primary rounded-pill px-5 fw-bold shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            {{ __('Download Certificate') }}
                         </a>
                     </div>
                 </div>

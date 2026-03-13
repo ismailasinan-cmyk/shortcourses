@@ -55,57 +55,56 @@ class PaymentController extends Controller
             abort(403, 'Unauthorized access to this application.');
         }
 
-        if ($application->payment_status == 'PAID') {
-             return redirect()->route('applications.review', $application->application_ref);
-        }
-
         $request->validate([
-            'rrr' => 'required|string|size:12', // Remita RRR is 12 digits
-            'receipt' => 'required|file|mimes:jpeg,png,jpg,pdf|max:5120', // Max 5MB
+            'rrr' => 'required|string|size:12',
+            'payment_type' => 'required|string|in:APPLICATION_FEE,COURSE_FEE,BOTH',
+            'receipt' => 'required|file|mimes:jpeg,png,jpg,pdf|max:5120',
         ]);
 
+        $paymentType = $request->payment_type;
+        $amountExpected = 0;
+        if ($paymentType === 'APPLICATION_FEE') {
+            $amountExpected = $application->application_fee_amount;
+        } elseif ($paymentType === 'COURSE_FEE') {
+            $amountExpected = $application->amount;
+        } else {
+            $amountExpected = $application->application_fee_amount + $application->amount;
+        }
+
         // Upload Receipt
-        $receiptPath = $request->file('receipt')->store('payment_receipts', 'private'); // Store privately
+        $receiptPath = $request->file('receipt')->store('payment_receipts', 'private');
 
         // Verify with Remita
-        // Rate limiting should be handled by middleware on route
         $verification = $this->remita->verifyPayment($request->rrr);
 
         Log::info('Payment Confirmation Attempt', [
             'app_ref' => $application->application_ref,
             'rrr' => $request->rrr,
+            'type' => $paymentType,
             'verification' => $verification
         ]);
 
         $status = 'PENDING';
         $verifiedAt = null;
-        $paymentStatus = 'PENDING';
+        $isPaid = false;
 
-        // Check verification response
-        // Remita "00" or "01" means successful
         if ($verification && (isset($verification['status']) && in_array($verification['status'], ['00', '01']))) {
-             if ($verification['amount'] >= $application->amount) {
+             if ($verification['amount'] >= $amountExpected) {
                  $status = 'VERIFIED';
                  $verifiedAt = now();
-                 $paymentStatus = 'PAID';
+                 $isPaid = true;
              } else {
-                 $status = 'REJECTED'; // Amount mismatch
-                 Log::warning('Payment verification amount mismatch', ['expected' => $application->amount, 'actual' => $verification['amount']]);
+                 $status = 'REJECTED'; 
+                 Log::warning('Payment verification amount mismatch', ['expected' => $amountExpected, 'actual' => $verification['amount']]);
              }
-        } else {
-             // Verification failed or pending at Remita end
-             // If completely invalid, maybe REJECTED? Or just keep PENDING
-             // Ideally we should differentiate "Invalid RRR" from "Pending Payment"
-             // For now, if API says fail, we keep as 'PENDING' for admin review or retry
         }
 
-        // Create or Update Payment Record
-        // We might have an existing payment init record from the "Pay Now" step if used
         $payment = Payment::updateOrCreate(
             ['remita_rrr' => $request->rrr],
             [
                 'application_id' => $application->id,
-                'amount' => $application->amount, // Use app amount or verification amount? Ideally app amount
+                'amount' => $amountExpected,
+                'payment_type' => $paymentType,
                 'status' => $status,
                 'channel' => 'REMITA',
                 'receipt_path' => $receiptPath,
@@ -114,16 +113,8 @@ class PaymentController extends Controller
             ]
         );
 
-        if ($paymentStatus == 'PAID') {
-            $application->update(['payment_status' => 'PAID', 'amount' => $application->amount]); // Ensure paid amount is set
-            
-            // Send Receipt Email
-            try {
-                \Illuminate\Support\Facades\Mail::to($application->email)->send(new \App\Mail\PaymentReceipt($application));
-            } catch (\Exception $e) {
-                Log::error('Email Error: ' . $e->getMessage());
-            }
-
+        if ($isPaid) {
+            $this->updateApplicationFeeStatuses($payment);
             return redirect()->route('applications.review', $application->application_ref)->with('success', 'Payment confirmed successfully!');
         }
 
@@ -136,13 +127,33 @@ class PaymentController extends Controller
     public function init(Request $request)
     {
         $application = Application::where('application_ref', $request->application_ref)->firstOrFail();
-        
-        if ($application->payment_status == 'PAID') {
+        $paymentType = $request->input('payment_type', 'BOTH'); // APPLICATION_FEE, COURSE_FEE, BOTH
+
+        if ($paymentType === 'APPLICATION_FEE' && $application->application_fee_status === 'PAID') {
+            return back()->with('success', 'Application fee already paid.');
+        }
+
+        if ($paymentType === 'COURSE_FEE' && $application->course_fee_status === 'PAID') {
+            return back()->with('success', 'Course fee already paid.');
+        }
+
+        if ($application->payment_status === 'PAID' && $paymentType === 'BOTH') {
             return redirect()->route('applications.review', $application->application_ref)->with('success', 'Payment already completed.');
         }
 
-        // Check if we already have a pending payment for this application
+        // Calculate Amount based on payment type
+        $amountToPay = 0;
+        if ($paymentType === 'APPLICATION_FEE') {
+            $amountToPay = $application->application_fee_amount;
+        } elseif ($paymentType === 'COURSE_FEE') {
+            $amountToPay = $application->amount;
+        } else {
+            $amountToPay = $application->application_fee_amount + $application->amount;
+        }
+
+        // Check if we already have a pending payment for this application and type
         $existingPayment = Payment::where('application_id', $application->id)
+                                  ->where('payment_type', $paymentType)
                                   ->where('status', 'PENDING')
                                   ->latest()
                                   ->first();
@@ -151,7 +162,11 @@ class PaymentController extends Controller
             $rrr = $existingPayment->remita_rrr;
             $response = json_decode($existingPayment->response_payload, true);
         } else {
+            // Temporary override application amount for Remita initialization
+            $originalAmount = $application->amount;
+            $application->amount = $amountToPay; 
             $response = $this->remita->initializePayment($application);
+            $application->amount = $originalAmount; // Restore
         }
 
         if ($response && (isset($response['RRR']) || isset($rrr))) {
@@ -161,7 +176,8 @@ class PaymentController extends Controller
                 Payment::create([
                     'application_id' => $application->id,
                     'remita_rrr' => $rrr,
-                    'amount' => $application->amount,
+                    'amount' => $amountToPay,
+                    'payment_type' => $paymentType,
                     'status' => 'PENDING',
                     'channel' => 'REMITA',
                     'response_payload' => json_encode($response),
@@ -181,7 +197,7 @@ class PaymentController extends Controller
 
             $paymentUrl = "https://demo.remita.net/remita/ecomm/finalize.reg";
 
-            return view('payments.redirect', compact('paymentUrl', 'merchantId', 'hash', 'rrr', 'responseUrl', 'apiKey', 'publicKey', 'application'));
+            return view('payments.redirect', compact('paymentUrl', 'merchantId', 'hash', 'rrr', 'responseUrl', 'apiKey', 'publicKey', 'application', 'paymentType'));
         }
 
         return back()->with('error', 'Failed to initialize payment. Please try again.');
@@ -191,7 +207,6 @@ class PaymentController extends Controller
     {
         Log::info('Remita Callback:', $request->all());
 
-        // Remita sends RRR and sometimes orderId in POST/GET
         $rrr = $request->input('RRR') ?? $request->input('rrr');
         
         if (!$rrr) {
@@ -201,35 +216,52 @@ class PaymentController extends Controller
         $verification = $this->remita->verifyPayment($rrr);
 
         if ($verification && (isset($verification['status']) && in_array($verification['status'], ['00', '01']))) {
-            // Payment Successful
             $payment = Payment::where('remita_rrr', $rrr)->first();
             
             if ($payment) {
                 $payment->update([
                     'status' => 'VERIFIED',
                     'response_payload' => json_encode($verification),
-                    'verified_at' => now(), // Add verified_at
-                    'paid_at' => now(), // Add paid_at
+                    'verified_at' => now(),
+                    'paid_at' => now(),
                 ]);
 
-                $application = $payment->application;
-                if ($application->payment_status != 'PAID') {
-                    $application->update(['payment_status' => 'PAID', 'amount' => $application->amount]);
-                    
-                    // Send Email
-                    try {
-                        \Illuminate\Support\Facades\Mail::to($application->email)->send(new \App\Mail\PaymentReceipt($application));
-                    } catch (\Exception $e) {
-                        Log::error('Email Error: ' . $e->getMessage());
-                    }
-                }
+                $this->updateApplicationFeeStatuses($payment);
                 
-                return redirect()->route('applications.review', $application->application_ref)->with('success', 'Payment Successful!');
+                return redirect()->route('applications.review', $payment->application->application_ref)->with('success', 'Payment Successful!');
             }
         }
 
-        // If not successful
         return redirect()->route('home')->with('error', 'Payment Verification Failed.');
+    }
+
+    protected function updateApplicationFeeStatuses($payment)
+    {
+        $application = $payment->application;
+        $type = $payment->payment_type;
+
+        if ($type === 'APPLICATION_FEE') {
+            $application->application_fee_status = 'PAID';
+        } elseif ($type === 'COURSE_FEE') {
+            $application->course_fee_status = 'PAID';
+        } elseif ($type === 'BOTH') {
+            $application->application_fee_status = 'PAID';
+            $application->course_fee_status = 'PAID';
+        }
+
+        // Check if overall payment status should be PAID
+        if ($application->application_fee_status === 'PAID' && $application->course_fee_status === 'PAID') {
+            $application->payment_status = 'PAID';
+        }
+
+        $application->save();
+
+        // Send Receipt Email
+        try {
+            \Illuminate\Support\Facades\Mail::to($application->email)->send(new \App\Mail\PaymentReceipt($application));
+        } catch (\Exception $e) {
+            Log::error('Email Error: ' . $e->getMessage());
+        }
     }
     public function viewReceipt($ref)
     {

@@ -106,9 +106,20 @@
                             </td>
                             <td class="py-3 fw-bold text-teal">₦{{ number_format($app->amount, 2) }}</td>
                             <td class="py-3 text-center">
-                                <span class="status-badge" style="background: {{ $app->payment_status == 'PAID' ? 'rgba(16, 185, 129, 0.1)' : ($app->payment_status == 'PENDING' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(239, 68, 68, 0.1)') }}; color: {{ $app->payment_status == 'PAID' ? '#059669' : ($app->payment_status == 'PENDING' ? '#D97706' : '#DC2626') }};">
-                                    {{ $app->payment_status }}
-                                </span>
+                                <div class="d-flex flex-column gap-1 align-items-center">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="small text-muted">{{ __('App:') }}</span>
+                                        <span class="status-badge py-0 px-2" style="font-size: 0.7rem; background: {{ $app->application_fee_status == 'PAID' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)' }}; color: {{ $app->application_fee_status == 'PAID' ? '#059669' : '#D97706' }};">
+                                            {{ $app->application_fee_status }}
+                                        </span>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="small text-muted">{{ __('Course:') }}</span>
+                                        <span class="status-badge py-0 px-2" style="font-size: 0.7rem; background: {{ $app->course_fee_status == 'PAID' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(107, 114, 128, 0.1)' }}; color: {{ $app->course_fee_status == 'PAID' ? '#059669' : '#6B7280' }};">
+                                            {{ $app->course_fee_status }}
+                                        </span>
+                                    </div>
+                                </div>
                             </td>
                             <td class="py-3 text-center">
                                 <form action="{{ route('admin.applications.update-status', $app->id) }}" method="POST">
@@ -123,35 +134,75 @@
                             </td>
                             <td class="py-3 text-muted small">{{ $app->created_at->format('M d, Y') }}</td>
                             <td class="pe-4 py-3 text-end">
-                                @php
-                                    $receiptPayment = $app->payments->whereNotNull('receipt_path')->sortByDesc('created_at')->first();
-                                    $pendingPayment = $app->payments->where('status', 'PENDING')->sortByDesc('created_at')->first();
-                                @endphp
+                                <div class="d-flex flex-column gap-2 align-items-end">
+                                    @php
+                                        $pendingPayments = $app->payments->where('status', 'PENDING')->whereNotNull('receipt_path');
+                                    @endphp
 
-                                @if($receiptPayment)
-                                    <div class="d-flex gap-1 justify-content-end mb-2">
-                                        <button type="button" class="btn btn-sm btn-info text-white shadow-sm rounded-pill px-3" 
-                                            data-bs-toggle="modal" 
-                                            data-bs-target="#receiptPreviewModal" 
-                                            data-app-ref="{{ $app->application_ref }}"
-                                            data-rrr="{{ $receiptPayment->remita_rrr }}"
-                                            data-view-url="{{ route('admin.applications.view-receipt', $app->id) }}">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                                            {{ __('Receipt') }}
-                                        </button>
-                                        @if($pendingPayment && $app->payment_status !== 'PAID')
-                                            <form action="{{ route('admin.applications.approve-payment', $app->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to approve this payment? Ref: {{ $app->application_ref }} RRR: {{ $pendingPayment->remita_rrr }}');">
+                                    @foreach($pendingPayments as $payment)
+                                        <div class="d-flex gap-1">
+                                            <button type="button" class="btn btn-sm btn-info text-white shadow-sm rounded-pill px-2 py-0" 
+                                                style="font-size: 0.7rem;"
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#receiptPreviewModal" 
+                                                data-app-ref="{{ $app->application_ref }}"
+                                                data-rrr="{{ $payment->remita_rrr }}"
+                                                data-view-url="{{ route('admin.applications.view-receipt', $app->id) }}?payment_id={{ $payment->id }}">
+                                                {{ __('Receipt') }} ({{ $payment->payment_type == 'APPLICATION_FEE' ? 'App' : ($payment->payment_type == 'COURSE_FEE' ? 'Course' : 'Both') }})
+                                            </button>
+                                            
+                                            <form action="{{ route('admin.applications.approve-payment', $app->id) }}" method="POST" onsubmit="return confirm('Approve {{ $payment->payment_type }}?');">
                                                 @csrf
-                                                <button type="submit" class="btn btn-sm btn-success shadow-sm rounded-pill px-3">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                                <input type="hidden" name="payment_id" value="{{ $payment->id }}">
+                                                <button type="submit" class="btn btn-sm btn-success shadow-sm rounded-pill px-2 py-0" style="font-size: 0.7rem;">
                                                     {{ __('Approve') }}
                                                 </button>
                                             </form>
+                                        </div>
+                                    @endforeach
+
+                                    @if($app->application_fee_status === 'PAID' && $app->course_fee_status === 'PAID')
+                                        @if($app->certificate_path)
+                                            <div class="mt-1 text-end">
+                                                <button type="button" class="badge bg-success bg-opacity-10 text-success rounded-pill px-2 py-1 small mb-1 border-0" 
+                                                    style="font-size: 0.7rem; cursor: pointer;"
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#receiptPreviewModal" 
+                                                    data-app-ref="{{ $app->application_ref }}"
+                                                    data-view-url="{{ route('admin.applications.view-certificate', $app->id) }}"
+                                                    data-modal-title="{{ __('Certificate Preview') }}">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="me-1"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                                    {{ __('Certificate Uploaded') }}
+                                                </button>
+                                                <br>
+                                                <button type="button" class="btn btn-link btn-sm text-primary p-0 text-decoration-none small"
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#uploadCertificateModal"
+                                                    data-app-id="{{ $app->id }}"
+                                                    data-app-ref="{{ $app->application_ref }}"
+                                                    style="font-size: 0.7rem;">
+                                                    {{ __('Re-upload') }}
+                                                </button>
+                                            </div>
+                                        @else
+                                            <button type="button" class="btn btn-sm btn-primary shadow-sm rounded-pill px-3 mt-1"
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#uploadCertificateModal"
+                                                data-app-id="{{ $app->id }}"
+                                                data-app-ref="{{ $app->application_ref }}"
+                                                style="font-size: 0.75rem;">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path><line x1="12" y1="11" x2="12" y2="17"></line><polyline points="9 14 12 11 15 14"></polyline></svg>
+                                                {{ __('Upload Cert') }}
+                                            </button>
                                         @endif
-                                    </div>
-                                @endif
+                                    @endif
 
-
+                                    @if($pendingPayments->isEmpty() && $app->payments->where('status', 'VERIFIED')->isNotEmpty() && $app->payment_status !== 'PAID')
+                                        <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2 py-1 small">
+                                            {{ __('Payments Verified') }}
+                                        </span>
+                                    @endif
+                                </div>
                             </td>
                         </tr>
                         @endforeach
@@ -170,17 +221,6 @@
 
 
 @push('styles')
-<style>
-    .pagination .page-item:first-child,
-    .pagination .page-item:last-child {
-        display: none !important;
-    }
-    /* Remove arrows from selects */
-    .form-select {
-        background-image: none !important;
-        padding-right: 0.75rem !important;
-    }
-</style>
 @endpush
 
 <form id="batchDeleteForm" action="{{ route('admin.applications.batch-destroy') }}" method="POST" class="d-none">
@@ -219,22 +259,71 @@
         </div>
     </div>
 </div>
+
+<!-- Upload Certificate Modal -->
+<div class="modal fade" id="uploadCertificateModal" tabindex="-1" aria-labelledby="uploadCertificateModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header bg-primary text-white border-0 py-3">
+                <h5 class="modal-title fw-bold" id="uploadCertificateModalLabel">{{ __('Upload Student Certificate') }}</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="certificateUploadForm" method="POST" enctype="multipart/form-data">
+                @csrf
+                <div class="modal-body p-4">
+                    <div class="mb-4 text-center">
+                        <div class="p-4 bg-light rounded-4 border-2 border-dashed border-primary border-opacity-25">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-primary mb-3 opacity-50"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><polyline points="9 15 12 12 15 15"></polyline></svg>
+                            <h6 class="fw-bold mb-1">{{ __('Select Certificate File') }}</h6>
+                            <p class="text-muted small mb-3">{{ __('PDF, JPG or PNG (Max 5MB)') }}</p>
+                            <input type="file" name="certificate" class="form-control rounded-pill border-primary border-opacity-25" required>
+                        </div>
+                    </div>
+                    <div class="alert alert-info border-0 rounded-3 small mb-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                        {{ __('The student will be able to download this certificate from their dashboard.') }}
+                    </div>
+                </div>
+                <div class="modal-footer border-0 bg-light py-3">
+                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">{{ __('Upload Now') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
 <script>
-    const modal = document.getElementById('receiptPreviewModal');
-    if (modal) {
-        modal.addEventListener('show.bs.modal', function (event) {
+    const certModal = document.getElementById('uploadCertificateModal');
+    if (certModal) {
+        certModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const appId = button.getAttribute('data-app-id');
+            const appRef = button.getAttribute('data-app-ref');
+            
+            const form = document.getElementById('certificateUploadForm');
+            form.action = `/admin/applications/${appId}/upload-certificate`;
+            
+            document.getElementById('uploadCertificateModalLabel').innerText = `{{ __('Upload Certificate') }} - ${appRef}`;
+        });
+    }
+
+    const receiptModal = document.getElementById('receiptPreviewModal');
+    if (receiptModal) {
+        receiptModal.addEventListener('show.bs.modal', function (event) {
             const button = event.relatedTarget;
             const ref = button.getAttribute('data-app-ref');
             const viewUrl = button.getAttribute('data-view-url');
+            const modalTitle = button.getAttribute('data-modal-title') || '{{ __('Payment Receipt Preview') }}';
             
             const frame = document.getElementById('receiptFrame');
             const img = document.getElementById('receiptImage');
             const loader = document.getElementById('loader');
             const error = document.getElementById('errorMsg');
             const refSpan = document.getElementById('modalAppRef');
+            const titleLabel = document.getElementById('receiptPreviewModalLabel');
             
             // Reset state
             frame.style.display = 'none';
@@ -244,6 +333,7 @@
             frame.src = '';
             img.src = '';
             
+            titleLabel.innerText = modalTitle;
             refSpan.textContent = ref + (button.getAttribute('data-rrr') ? ' | RRR: ' + button.getAttribute('data-rrr') : '');
             
             // Try to detect file type from URL or just try to load
@@ -272,7 +362,7 @@
                 });
         });
         
-        modal.addEventListener('hidden.bs.modal', function() {
+        receiptModal.addEventListener('hidden.bs.modal', function() {
             document.getElementById('receiptFrame').src = '';
             document.getElementById('receiptImage').src = '';
         });
