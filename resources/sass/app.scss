@@ -209,11 +209,6 @@ h6 {
 // Global Pagination Refinement
 .pagination {
     .page-item {
-        &:first-child,
-        &:last-child {
-            display: none !important;
-        }
-        
         .page-link {
             border-radius: 8px !important;
             margin: 0 2px;
