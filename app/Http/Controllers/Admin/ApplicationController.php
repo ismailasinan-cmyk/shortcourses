@@ -226,6 +226,10 @@ class ApplicationController extends Controller
 
         $application = \App\Models\Application::findOrFail($id);
 
+        if ($application->admission_status !== 'ADMITTED' || $application->application_fee_status !== 'PAID' || $application->course_fee_status !== 'PAID') {
+            return back()->with('error', 'Certificate can only be uploaded for admitted students with fully verified payments.');
+        }
+
         if ($request->hasFile('certificate')) {
             // Delete old certificate if exists
             if ($application->certificate_path && \Illuminate\Support\Facades\Storage::disk('private')->exists($application->certificate_path)) {
