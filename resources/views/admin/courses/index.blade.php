@@ -4,10 +4,27 @@
 <div class="container">
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-5 gap-3">
         <h1 class="h3 mb-0 fw-bold text-primary">{{ __('Short Courses') }}</h1>
-        <a href="{{ route('admin.courses.create') }}" class="btn btn-teal shadow-sm">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-            {{ __('Add New Course') }}
-        </a>
+        
+        <div class="d-flex flex-wrap align-items-center gap-3">
+            <form action="{{ route('admin.courses.index') }}" method="GET" class="d-flex align-items-center">
+                <div class="input-group shadow-sm rounded-pill overflow-hidden" style="min-width: 300px;">
+                    <span class="input-group-text bg-white border-0 ps-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    </span>
+                    <input type="text" name="search" class="form-control border-0 px-2" placeholder="{{ __('Search courses...') }}" value="{{ request('search') }}">
+                    @if(request('search'))
+                        <a href="{{ route('admin.courses.index') }}" class="input-group-text bg-white border-0 pe-3 text-decoration-none text-muted">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        </a>
+                    @endif
+                </div>
+            </form>
+
+            <a href="{{ route('admin.courses.create') }}" class="btn btn-teal shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                {{ __('Add New Course') }}
+            </a>
+        </div>
     </div>
 
     @if(session('success'))

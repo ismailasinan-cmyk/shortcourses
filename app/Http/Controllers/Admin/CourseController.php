@@ -10,9 +10,20 @@ class CourseController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $courses = \App\Models\ShortCourse::latest()->paginate(10);
+        $query = \App\Models\ShortCourse::query();
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('course_name', 'like', "%{$search}%")
+                  ->orWhere('category', 'like', "%{$search}%")
+                  ->orWhere('code', 'like', "%{$search}%");
+            });
+        }
+
+        $courses = $query->latest()->paginate(20)->withQueryString();
         return view('admin.courses.index', compact('courses'));
     }
 
